@@ -1,0 +1,65 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ make
+
+    - name: Build
+      run: |
+        make
+
+    - name: Create test input
+      run: |
+        cat > input.txt << 'EOF'
+        5 1 2 + 4 * + 3 -
+        2 3 * 4 +
+        10 2 /
+        EOF
+
+    - name: Run program
+      run: |
+        ./calculator
+
+    - name: Display output
+      run: |
+        echo "Program output:"
+        cat output.txt
+
+    - name: Verify results
+      run: |
+        echo "Verifying calculations..."
+        echo "Expected results:"
+        echo "5 1 2 + 4 * + 3 - = 14"
+        echo "2 3 * 4 + = 10"
+        echo "10 2 / = 5"
+        echo -e "\nActual results:"
+        cat output.txt
+
+        # Simple verification
+        if grep -q "= 14" output.txt && \
+           grep -q "= 10" output.txt && \
+           grep -q "= 5" output.txt; then
+          echo "✓ All tests passed!"
+        else
+          echo "✗ Some tests failed"
+          exit 1
+        fi
+
+    - name: Clean up
+      run: |
+        make clean
+        rm -f input.txt output.txt
